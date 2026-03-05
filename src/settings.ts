@@ -1,8 +1,8 @@
-import * as assert from 'assert';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
+import * as assert from "assert";
+import * as dotenv from "dotenv";
+import * as path from "path";
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
 export function getEnvOrThrow(envName: string): string {
   const env = process.env[envName];
@@ -14,12 +14,19 @@ export function getEnvOrDefault(envName: string, defaultValue: string): string {
   return process.env[envName] ?? defaultValue;
 }
 
-export const PORT_NUMBER = getEnvOrDefault('PORT_NUMBER', '3000');
-export const DATABASE_NAME = getEnvOrThrow('DATABASE_NAME');
-export const DATABASE_USER = getEnvOrThrow('DATABASE_USER');
-export const DATABASE_PASSWORD = getEnvOrThrow('DATABASE_PASSWORD');
-export const DATABASE_HOST = getEnvOrDefault('DATABASE_HOST', 'localhost');
-export const DATABASE_PORT = getEnvOrDefault('DATABASE_PORT', '5432');
-export const JWT_SECRET = getEnvOrThrow('JWT_SECRET');
-export const JWT_EXPIRES_IN = getEnvOrDefault('JWT_EXPIRES_IN', '7d');
-export const ENCRYPTION_KEY = getEnvOrThrow('ENCRYPTION_KEY');
+export const PORT_NUMBER = getEnvOrDefault("PORT_NUMBER", "3000");
+export const DATABASE_NAME = getEnvOrThrow("DATABASE_NAME");
+export const DATABASE_USER = getEnvOrThrow("DATABASE_USER");
+export const DATABASE_PASSWORD = getEnvOrThrow("DATABASE_PASSWORD");
+export const DATABASE_HOST = getEnvOrDefault("DATABASE_HOST", "localhost");
+export const DATABASE_PORT = getEnvOrDefault("DATABASE_PORT", "5432");
+export const JWT_SECRET = getEnvOrThrow("JWT_SECRET");
+export const JWT_ACCESS_EXPIRES_IN = getEnvOrDefault(
+  "JWT_ACCESS_EXPIRES_IN",
+  "15m",
+);
+export const JWT_REFRESH_EXPIRES_IN = getEnvOrDefault(
+  "JWT_REFRESH_EXPIRES_IN",
+  "30d",
+);
+export const ENCRYPTION_KEY = getEnvOrThrow("ENCRYPTION_KEY");

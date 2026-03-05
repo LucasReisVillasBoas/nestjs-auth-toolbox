@@ -1,0 +1,51 @@
+name: infinity-check-api
+
+# Uso:
+#   Dev  (hot reload): docker compose up --build
+#   Prod:              docker compose -f docker-compose.yml up --build -d
+#
+# Antes de rodar: copie .env.example para .env e preencha os secrets.
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Porta 5433 no host para não conflitar com PostgreSQL local na 5432.
+      # Acesse de fora do Docker com: localhost:5433
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── NestJS API ──────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Dentro do Docker, acessa o postgres pelo nome do serviço na porta interna 5432
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+
+volumes:
+  postgres_data:

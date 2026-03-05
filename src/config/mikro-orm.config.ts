@@ -1,11 +1,13 @@
-import { defineConfig } from '@mikro-orm/postgresql';
+import { defineConfig } from "@mikro-orm/postgresql";
 import {
   DATABASE_NAME,
   DATABASE_PASSWORD,
   DATABASE_USER,
   DATABASE_HOST,
   DATABASE_PORT,
-} from '../settings';
+} from "../settings";
+import { User } from "../entities/user.entity";
+import { UserSession } from "../entities/user-session.entity";
 
 export default defineConfig({
   host: DATABASE_HOST,
@@ -15,27 +17,30 @@ export default defineConfig({
   password: DATABASE_PASSWORD,
 
   // Registre aqui TODAS as entidades da aplicação
-  entities: [
-    // Adicione suas entidades aqui conforme for criando
-  ],
+  entities: [User, UserSession],
 
   // Permite rodar sem entidades no início do projeto
   discovery: {
     warnWhenNoEntities: false,
   },
 
-  // Não conecta automaticamente ao banco no startup (útil para desenvolvimento)
-  connect: false,
-
   migrations: {
-    path: 'src/database/migrations',
+    // Em produção (após `npm run build`), as migrations são compiladas para dist/.
+    // Em desenvolvimento, o CLI usa ts-node e aponta para o código TypeScript.
+    path:
+      process.env.NODE_ENV === "production"
+        ? "dist/database/migrations"
+        : "src/database/migrations",
   },
 
   seeder: {
-    path: 'src/database/seeders',
+    path:
+      process.env.NODE_ENV === "production"
+        ? "dist/database/seeders"
+        : "src/database/seeders",
   },
 
   // Configurações adicionais recomendadas
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NODE_ENV === "development",
   allowGlobalContext: true, // Permite usar EntityManager fora do RequestContext em algumas situações
 });

@@ -1,12 +1,22 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 
+/**
+ * Guard de roles baseado em permissoes.
+ * @Roles('usuarios') — exige que user.permissoes tenha a chave 'usuarios'
+ * com pelo menos uma ação associada.
+ */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>('roles', [
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>("roles", [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -19,13 +29,20 @@ export class RolesGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Usuário não autenticado');
+      throw new ForbiddenException("Usuário não autenticado");
     }
 
-    const hasRole = requiredRoles.some((role) => user.roles?.includes(role));
+    const permissoes: Record<string, string[]> = user.permissoes ?? {};
+
+    // Verifica se o usuário possui ao menos um dos módulos (roles) exigidos
+    const hasRole = requiredRoles.some(
+      (role) => Array.isArray(permissoes[role]) && permissoes[role].length > 0,
+    );
 
     if (!hasRole) {
-      throw new ForbiddenException('Você não tem permissão para acessar este recurso');
+      throw new ForbiddenException(
+        "Você não tem permissão para acessar este recurso",
+      );
     }
 
     return true;

@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
@@ -20,10 +21,13 @@ async function bootstrap() {
     };
   }
 
-  // 2. Criar app
+  // 2. Criar app (bufferLogs garante que logs do bootstrap não se percam)
   const app = httpsEnabled
-    ? await NestFactory.create(AppModule, { httpsOptions })
-    : await NestFactory.create(AppModule);
+    ? await NestFactory.create(AppModule, { httpsOptions, bufferLogs: true })
+    : await NestFactory.create(AppModule, { bufferLogs: true });
+
+  // Usar Pino como logger global da aplicação
+  app.useLogger(app.get(Logger));
 
   // 3. Helmet — headers de segurança HTTP
   app.use(
@@ -119,10 +123,10 @@ async function bootstrap() {
 
   // 8. Iniciar
   await app.listen(port);
-  console.log(`\n🚀 Aplicação rodando em http://localhost:${port}`);
-  console.log(`📚 Swagger em http://localhost:${port}/api`);
-  console.log(`📄 OpenAPI JSON em http://localhost:${port}/api-json`);
-  console.log(`📄 OpenAPI YAML em http://localhost:${port}/api-yaml\n`);
+  const logger = app.get(Logger);
+  logger.log(`Aplicação rodando em http://localhost:${port}`, 'Bootstrap');
+  logger.log(`Swagger em http://localhost:${port}/api`, 'Bootstrap');
+  logger.log(`Ambiente: ${process.env.NODE_ENV ?? 'development'}`, 'Bootstrap');
 }
 
 bootstrap();

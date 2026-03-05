@@ -1,24 +1,23 @@
-import { Injectable } from '@nestjs/common';
-import { EntityManager } from '@mikro-orm/core';
+import { Injectable, Logger } from "@nestjs/common";
 
 export enum AuditEventType {
-  USER_LOGIN = 'USER_LOGIN',
-  USER_LOGOUT = 'USER_LOGOUT',
-  USER_CREATED = 'USER_CREATED',
-  USER_UPDATED = 'USER_UPDATED',
-  USER_DELETED = 'USER_DELETED',
-  ENTITY_CREATED = 'ENTITY_CREATED',
-  ENTITY_UPDATED = 'ENTITY_UPDATED',
-  ENTITY_DELETED = 'ENTITY_DELETED',
-  PERMISSION_DENIED = 'PERMISSION_DENIED',
-  SYSTEM_ERROR = 'SYSTEM_ERROR',
+  USER_LOGIN = "USER_LOGIN",
+  USER_LOGOUT = "USER_LOGOUT",
+  USER_CREATED = "USER_CREATED",
+  USER_UPDATED = "USER_UPDATED",
+  USER_DELETED = "USER_DELETED",
+  ENTITY_CREATED = "ENTITY_CREATED",
+  ENTITY_UPDATED = "ENTITY_UPDATED",
+  ENTITY_DELETED = "ENTITY_DELETED",
+  PERMISSION_DENIED = "PERMISSION_DENIED",
+  SYSTEM_ERROR = "SYSTEM_ERROR",
 }
 
 export enum AuditSeverity {
-  INFO = 'INFO',
-  WARNING = 'WARNING',
-  ERROR = 'ERROR',
-  CRITICAL = 'CRITICAL',
+  INFO = "INFO",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
+  CRITICAL = "CRITICAL",
 }
 
 export interface AuditLogData {
@@ -39,25 +38,25 @@ export interface AuditLogData {
 
 @Injectable()
 export class AuditService {
-  constructor(private readonly em: EntityManager) {}
+  private readonly logger = new Logger(AuditService.name);
 
   async log(data: AuditLogData): Promise<void> {
     try {
-      // Em um sistema real, isso salvaria em uma tabela de auditoria imutável
-      // Por enquanto, apenas logamos no console
-      const logEntry = {
-        ...data,
-        timestamp: data.timestamp.toISOString(),
-      };
+      const msg = `[AUDIT] ${data.eventType} | success=${data.success}${data.userEmail ? ` | user=${data.userEmail}` : ""}${data.empresaId ? ` | empresa=${data.empresaId}` : ""}${data.errorMessage ? ` | error=${data.errorMessage}` : ""}`;
 
-      console.log('[AUDIT]', JSON.stringify(logEntry));
-
-      // TODO: Persistir em tabela de auditoria quando a entidade for criada
-      // const auditLog = this.em.create(AuditLog, logEntry);
-      // await this.em.persistAndFlush(auditLog);
+      if (
+        data.severity === AuditSeverity.ERROR ||
+        data.severity === AuditSeverity.CRITICAL
+      ) {
+        this.logger.error({ ...data, timestamp: data.timestamp.toISOString() }, msg);
+      } else if (data.severity === AuditSeverity.WARNING) {
+        this.logger.warn(msg);
+      } else {
+        this.logger.log(msg);
+      }
     } catch (error) {
       // Nunca deixar falha de auditoria quebrar a aplicação
-      console.error('Erro ao registrar auditoria:', error);
+      this.logger.error(`Erro ao registrar auditoria: ${error}`);
     }
   }
 
@@ -81,7 +80,7 @@ export class AuditService {
   async logEntityChange(
     entityName: string,
     entityId: string,
-    action: 'create' | 'update' | 'delete',
+    action: "create" | "update" | "delete",
     userId: string,
     userEmail: string,
     empresaId: string,

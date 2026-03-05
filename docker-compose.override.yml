@@ -1,0 +1,24 @@
+# docker-compose.override.yml
+# Carregado automaticamente em desenvolvimento (docker compose up --build).
+# Para produção: docker compose -f docker-compose.yml up --build -d
+
+services:
+
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      # Garante que dentro do Docker a API usa o serviço postgres na porta interna 5432
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+    volumes:
+      # Monta src/ para hot reload — node_modules permanece na imagem
+      - ./src:/app/src
+      # .env montado para o dotenv.config() do settings.ts encontrar o arquivo
+      - ./.env:/app/.env:ro
+    ports:
+      - "9229:9229"   # Node.js inspector (debug)
+    entrypoint: []
+    # 0.0.0.0 obrigatório para o inspector ser acessível fora do container
+    command: sh -c "npm run migration:up && node_modules/.bin/nest start --debug=0.0.0.0:9229 --watch"
